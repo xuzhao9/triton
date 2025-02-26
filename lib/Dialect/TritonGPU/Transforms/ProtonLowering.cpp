@@ -93,7 +93,7 @@ public:
         triton::gpu::CTALayoutAttr::get(context, /*CTAsPerCGA=*/{1},
                                         /*CTASplitNum=*/{1}, /*CTAOrder=*/{0});
     auto encoding =
-        triton::gpu::SharedEncodingTrait::get(context, 1, 1, 1, {0}, ctaLayout);
+        triton::gpu::SwizzledSharedEncodingAttr::get(context, 1, 1, 1, {0}, ctaLayout);
     auto bufferType =
         MemDescType::get({wordsPerEntry * slots}, builder.getI32Type(),
                          encoding, sharedMemorySpace, /*mutable_memory=*/true);
@@ -110,7 +110,7 @@ public:
 
     mlir::RewritePatternSet patterns(context);
     patterns.add<ProtonRecordOpLowering>(context, buffer, index);
-    if (applyPatterns(m, std::move(patterns)).failed())
+    if (applyPatternsGreedily(m, std::move(patterns)).failed())
       signalPassFailure();
 
     Value profileMem = func.getArguments().back();
