@@ -1348,7 +1348,7 @@ LinearEncodingAttr::getContig(const char *inDim,
     while (basisIt != bases.end() && *basisIt == basis) {
       contig[dim] *= 2;
       basis[dim] *= 2;
-      +basisIt;
+      ++basisIt;
     }
   }
   return contig;
