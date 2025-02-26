@@ -39,6 +39,7 @@ class HIPOptions:
     allow_flush_denorm: bool = False
     max_num_imprecise_acc_default: int = 0
     backend_name: str = 'hip'
+    proton_slots: int = 0
 
     # The following option provides hints to the AMDGPU backend regarding instruction scheduling
     # for all `tt.dot` operations in a kernel. The "none" variant preserves the default
@@ -195,7 +196,7 @@ class HIPBackend(BaseBackend):
         pm = ir.pass_manager(mod.context)
         pm.enable_debug()
         passes.ttir.add_convert_to_ttgpuir(pm, f"hip:{options.arch}", options.num_warps, options.warp_size,
-                                           options.num_ctas)
+                                           options.num_ctas, options.proton_slots)
         pm.run(mod)
         pm = ir.pass_manager(mod.context)
         pm.enable_debug()
@@ -259,6 +260,8 @@ class HIPBackend(BaseBackend):
         # LDS size is determined by provided arch name.
         custom_lds_size = 0
         amd.passes.ttgpuir.add_optimize_lds_usage(pm, options.arch, custom_lds_size)
+        if (options.proton_slots > 0):
+            passes.ttgpuir.add_proton_lowering(pm)
         passes.convert.add_scf_to_cf(pm)
         passes.convert.add_index_to_llvmir(pm)
 
@@ -346,6 +349,7 @@ class HIPBackend(BaseBackend):
 
         # Get some metadata
         metadata["shared"] = src.get_int_attr("ttg.shared")
+        metadata["proton_granularity"] = src.get_int_attr("proton.granularity.warpgroup")
 
         amd.cleanup_bitcode_metadata(llvm_mod)
         # Disable inlining of print related functions,

@@ -21,6 +21,7 @@ add_triton_library(TritonAMDGPUToLLVM
     OptimizeLDSUsage.cpp
     OptimizeLDSUtility.cpp
     SPMDOpToLLVM.cpp
+    ProtonOpToLLVM.cpp
     SchedInstructions.cpp
     UpcastMXFPToLLVM.cpp
 

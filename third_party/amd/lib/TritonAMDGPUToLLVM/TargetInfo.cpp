@@ -194,6 +194,31 @@ static inline Value truncAndCastFromInt(RewriterBase &rewriter, Location loc,
   return toVal;
 }
 
+Value TargetInfo::hardwareId(ConversionPatternRewriter &rewriter,
+                             Location loc) const {
+  GCNBuilder builder;
+  auto &gethwid = *builder.create("s_getreg_b32");
+  auto res = builder.newOperand("=s");
+  auto hwreg = builder.newConstantOperand("hwreg(HW_REG_HW_ID, 0, 32)");
+  gethwid(res, hwreg);
+  builder.create<>("s_waitcnt lgkmcnt(0)")->operator()();
+  return builder.launch(rewriter, loc, i32_ty, false);
+}
+
+Value TargetInfo::clock(ConversionPatternRewriter &rewriter, Location loc,
+                        bool isClock64) const {
+  GCNBuilder clkBuilder;
+  auto &rdclk = *clkBuilder.create("s_memtime");
+  auto sreg = clkBuilder.newOperand("=s");
+  rdclk(sreg);
+  clkBuilder.create<>("s_waitcnt lgkmcnt(0)")->operator()();
+  auto clk64 = clkBuilder.launch(rewriter, loc, i64_ty, true);
+  auto i32x2VecTy = vec_ty(i32_ty, 2);
+  auto i32x2Vec = bitcast(clk64, i32x2VecTy);
+  return extract_element(i32_ty, i32x2Vec, i32_val(0));
+}
+
+
 bool TargetInfo::warpReduce(RewriterBase &rewriter, Location loc,
                             SmallVector<Value> &acc, triton::ReduceOp op,
                             unsigned numLaneToReduce,
