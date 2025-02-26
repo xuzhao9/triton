@@ -239,6 +239,14 @@ llvm::SmallVector<T> expandMatrixShapeWithBatch(llvm::ArrayRef<T> s);
 llvm::SmallVector<unsigned>
 expandMatrixOrderWithBatch(llvm::ArrayRef<unsigned> o);
 
+// Return the number of warps in a warp group. Currently, hard-coded to 4.
+// TODO(fywkevin): Put this as an attribute of the module
+// so user can flexibly choose the granularity to profile.
+const int getWarpGroupSize();
+
+// Return the number of words (4bytes) each proton entry has.
+const int getWordsPerProtonEntry();
+
 } // namespace mlir::triton::gpu
 
 #endif // TRITON_DIALECT_TRITONGPU_IR_DIALECT_H_

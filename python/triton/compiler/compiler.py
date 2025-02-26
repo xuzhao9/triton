@@ -49,6 +49,15 @@ def convert_type_repr(x):
     return x
 
 
+def _get_proton_slots_from_ir_str(src: str):
+    proton_slots_pattern = r'"triton_gpu.proton-slots"\s?=\s?(\d+)\s?:'
+    matches = re.findall(proton_slots_pattern, src)
+    matches_len = len(matches)
+    assert matches_len <= 1, "Expected exactly zero or one match for proton-slots"
+    num_slot = int(matches[0]) if matches_len == 1 else None
+    return num_slot
+
+
 class ASTSource:
 
     def __init__(self, fn, signature, constexprs=None, attrs=None) -> None:
@@ -122,7 +131,11 @@ class IRSource:
         if self.ext == "ttgir":
             num_warps = self.module.get_int_attr("ttg.num-warps")
             assert num_warps is not None, "Unable to parse ttg.num-warps attribute"
-            return {'num_warps': num_warps}
+            options = {'num_warps': num_warps}
+            num_slots = _get_proton_slots_from_ir_str(self.src)
+            if num_slots:
+                options["proton_slots"] = num_slots
+            return options
         return dict()
 
 

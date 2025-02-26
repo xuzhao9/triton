@@ -28,6 +28,9 @@ def ConvertTritonToTritonGPU: Pass<"convert-triton-to-tritongpu", "mlir::ModuleO
               "int32_t", /*default*/"4",
               "number of warps">,
 
+       Option<"protonSlots", "proton-slots",
+              "int32_t", /*default*/"0",
+              "number of proton profiler slots">,
        Option<"threadsPerWarp", "threads-per-warp",
               "int32_t", /*default*/"32",
               "number of threads per warp">,

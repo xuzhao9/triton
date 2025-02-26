@@ -33,6 +33,10 @@ namespace mlir {
 namespace triton {
 namespace gpu {
 
+const int getWarpGroupSize() { return 4; }
+
+const int getWordsPerProtonEntry() { return 2; }
+
 LinearEncodingAttr toLinearEncoding(Attribute layout, ArrayRef<int64_t> shape) {
   auto linearLayout = toLinearLayout(shape, layout);
   return LinearEncodingAttr::get(layout.getContext(), std::move(linearLayout));
