@@ -450,7 +450,7 @@ def TTG_LocalRecordOp : TTG_Op<"local_record", [DeclareOpInterfaceMethods<Memory
     and save it in the shared memory. The bookkeeping is automatically maintained.
   }];
   let arguments = (
-    ins TT_MemDescType:$data,
+    ins TTG_MemDescType:$data,
     TT_PtrLike :$indexPtr,
     BoolAttr: $isStart,
     I32Attr: $regionId,
@@ -467,7 +467,7 @@ def TTG_ProtonFinalizeOp : TTG_Op<"proton_finalize", [DeclareOpInterfaceMethods<
     Finalize the intra kernel profiler, including dumping the metadata and measurements to the global memory.
   }];
   let arguments = (
-    ins TT_MemDescType:$data,
+    ins TTG_MemDescType:$data,
     TT_PtrLike :$indexPtr,
     TT_PtrLike :$ptr
   );
