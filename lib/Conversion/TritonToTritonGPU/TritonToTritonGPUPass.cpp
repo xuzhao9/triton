@@ -878,14 +878,7 @@ public:
     mod->setAttr(AttrNumCTAsName, b.getI32IntegerAttr(numCTAs));
     mod->setAttr(AttrTargetName, b.getStringAttr(this->target.getValue()));
     if (protonSlots.getValue() > 0)
-      mod->setAttr(
-          AttrProtonSlotsName,
-          IntegerAttr::get(i32_ty, llvm::APInt(32, protonSlots.getValue())));
-
-    if (protonSlots.getValue() > 0)
-      mod->setAttr(
-          AttrProtonSlotsName,
-          IntegerAttr::get(i32_ty, llvm::APInt(32, protonSlots.getValue())));
+      mod->setAttr(AttrProtonSlotsName, b.getI32IntegerAttr(protonSlots));
 
     if (failed(applyPartialConversion(mod, target, std::move(patterns))))
       return signalPassFailure();
@@ -903,7 +896,8 @@ std::unique_ptr<OperationPass<ModuleOp>>
 mlir::triton::createConvertTritonToTritonGPUPass(const std::string &target,
                                                  int numWarps,
                                                  int threadsPerWarp,
-                                                 int numCTAs) {
+                                                 int numCTAs,
+                                                 int protonSlots) {
   return std::make_unique<::ConvertTritonToTritonGPU>(target, numWarps,
                                                       threadsPerWarp, numCTAs, protonSlots);
 }
