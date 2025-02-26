@@ -882,11 +882,6 @@ public:
           AttrProtonSlotsName,
           IntegerAttr::get(i32_ty, llvm::APInt(32, protonSlots.getValue())));
 
-    if (protonSlots.getValue() > 0)
-      mod->setAttr(
-          AttrProtonSlotsName,
-          IntegerAttr::get(i32_ty, llvm::APInt(32, protonSlots.getValue())));
-
     if (failed(applyPartialConversion(mod, target, std::move(patterns))))
       return signalPassFailure();
 

@@ -247,9 +247,6 @@ const int getWarpGroupSize();
 // Return the number of words (4bytes) each proton entry has.
 const int getWordsPerProtonEntry();
 
-const int getWarpGroupSize();
-const int getWordsPerProtonEntry();
-
 } // namespace mlir::triton::gpu
 
 #endif // TRITON_DIALECT_TRITONGPU_IR_DIALECT_H_
