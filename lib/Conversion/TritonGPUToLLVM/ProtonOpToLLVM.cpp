@@ -37,7 +37,7 @@ struct ProtonFinalizeOpConversion
       wgSpecNum = cast<IntegerAttr>(attr).getInt();
     }
     const int numWarp =
-        triton::gpu::TritonGPUDialect::getNumWarps(mod) * wgSpecNum;
+        triton::gpu::lookupNumWarps(mod) * wgSpecNum;
     Value threadId = getThreadId(rewriter, loc);
     Value warpId =
         udiv(threadId,

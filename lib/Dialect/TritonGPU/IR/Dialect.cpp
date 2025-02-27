@@ -3569,7 +3569,7 @@ void LocalRecordOp::getEffects(
   
     const int warpsPerGroup = getWarpGroupSize();
     int numWarpgroups =
-        TritonGPUDialect::getNumWarps(m) * wgSpecNum / warpsPerGroup;
+        triton::gpu::lookupNumWarps(m) * wgSpecNum / warpsPerGroup;
     if (slots < numWarpgroups)
       return emitError(
           "Proton slots must be greater than the number of warpgroups per CTA");
