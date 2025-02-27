@@ -45,7 +45,7 @@ struct LocalRecordOpConversion
     const int warpgroupSize = warpsPerGroup * warpSize;
     const int slots =
         cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
-    const int numWarpgroup = triton::gpu::TritonGPUDialect::getNumWarps(mod) *
+    const int numWarpgroup = triton::gpu::lookupNumWarps(mod) *
                              wgSpecNum / warpsPerGroup;
     const int step =
         isWarpLevel ? (warpsPerGroup * wordsPerEntry) : wordsPerEntry;
