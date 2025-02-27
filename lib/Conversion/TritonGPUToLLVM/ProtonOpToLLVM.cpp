@@ -65,7 +65,7 @@ struct ProtonFinalizeOpConversion
         loc, i64_ty,
         rewriter.create<::mlir::gpu::GridDimOp>(loc, mlir::gpu::Dimension::y));
     Value pid = b.trunc(i32_ty, b.add(b.add(pidX, b.mul(pidY, gridDimX)),
-                                  b.mul(pidZ, mul(gridDimX, gridDimY))));
+                                  b.mul(pidZ, b.mul(gridDimX, gridDimY))));
     Value programOffset = b.mul(b.i32_val(scratchWordSize), pid);
 
     auto gmemPtrTy = ptr_ty(rewriter.getContext(), 1);
@@ -164,9 +164,10 @@ struct ProtonInitOpConversion
     auto loc = op.getLoc();
     auto mod = op.getOperation()->getParentOfType<ModuleOp>();
     auto ptrTy = ptr_ty(rewriter.getContext(), 1);
+    auto b = TritonLLVMOpBuilder(loc, rewriter);
     auto indexPtr = rewriter.create<LLVM::AllocaOp>(
-        loc, ptrTy, i32_ty, i32_val(1), /*alignment=*/0);
-    store(i32_val(0), indexPtr);
+        loc, ptrTy, i32_ty, b.i32_val(1), /*alignment=*/0);
+    b.store(b.i32_val(0), indexPtr);
     rewriter.replaceOp(op, indexPtr);
     return success();
   }

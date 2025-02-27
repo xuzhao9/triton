@@ -77,8 +77,8 @@ struct LocalRecordOpConversion
 
     // Record the entry and vectorized store to smem.
     Value vecPtr = b.gep(smemPtrTy, i32_ty, smemDataBasePtr, smemTagOffset);
-    Value tag = op.getIsStart() ? i32_val(op.getRegionId())
-                                : i32_val(1 << 31 | op.getRegionId());
+    Value tag = op.getIsStart() ? b.i32_val(op.getRegionId())
+                                : b.i32_val(1 << 31 | op.getRegionId());
     Value clock = targetInfo.clock(rewriter, loc, false);
 
     Value valsVec = packLLVector(loc, {tag, clock}, rewriter);

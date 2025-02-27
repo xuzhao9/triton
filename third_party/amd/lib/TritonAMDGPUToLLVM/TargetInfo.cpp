@@ -210,12 +210,13 @@ Value TargetInfo::clock(ConversionPatternRewriter &rewriter, Location loc,
   GCNBuilder clkBuilder;
   auto &rdclk = *clkBuilder.create("s_memtime");
   auto sreg = clkBuilder.newOperand("=s");
+  auto b = TritonLLVMOpBuilder(loc, rewriter);
   rdclk(sreg);
   clkBuilder.create<>("s_waitcnt lgkmcnt(0)")->operator()();
   auto clk64 = clkBuilder.launch(rewriter, loc, i64_ty, true);
   auto i32x2VecTy = vec_ty(i32_ty, 2);
-  auto i32x2Vec = bitcast(clk64, i32x2VecTy);
-  return extract_element(i32_ty, i32x2Vec, i32_val(0));
+  auto i32x2Vec = b.bitcast(clk64, i32x2VecTy);
+  return b.extract_element(i32_ty, i32x2Vec, b.i32_val(0));
 }
 
 
