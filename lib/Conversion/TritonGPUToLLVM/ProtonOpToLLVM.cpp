@@ -29,6 +29,7 @@ struct ProtonFinalizeOpConversion
 
     auto loc = op.getLoc();
     auto mod = op.getOperation()->getParentOfType<ModuleOp>();
+    auto b = TritonLLVMOpBuilder(loc, rewriter);
     const int warpsPerGroup = triton::gpu::getWarpGroupSize();
     const int wordsPerEntry = triton::gpu::getWordsPerProtonEntry();
     // Hack: adapt the hacking from Warp Specialization.
@@ -40,9 +41,9 @@ struct ProtonFinalizeOpConversion
         triton::gpu::lookupNumWarps(mod) * wgSpecNum;
     Value threadId = getThreadId(rewriter, loc);
     Value warpId =
-        udiv(threadId,
-             i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
-    Value isFirstThread = icmp_eq(threadId, i32_val(0));
+        b.udiv(threadId,
+             b.i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
+    Value isFirstThread = b.icmp_eq(threadId, i32_val(0));
 
     const int slots =
         cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
@@ -53,9 +54,9 @@ struct ProtonFinalizeOpConversion
     // Note: we compute use i64 data type to compute and then truncate to i32
     // because the amd backend has __ockl_get_num_groups(i32) -> i64.
     // This is a workaround.
-    Value pidX = sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 0));
-    Value pidY = sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 1));
-    Value pidZ = sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 2));
+    Value pidX = b.sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 0));
+    Value pidY = b.sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 1));
+    Value pidZ = b.sext(i64_ty, targetInfo.programId(rewriter, loc, mod, 2));
     Value hwid = targetInfo.hardwareId(rewriter, loc);
     Value gridDimX = rewriter.create<arith::IndexCastOp>(
         loc, i64_ty,
@@ -63,24 +64,23 @@ struct ProtonFinalizeOpConversion
     Value gridDimY = rewriter.create<arith::IndexCastOp>(
         loc, i64_ty,
         rewriter.create<::mlir::gpu::GridDimOp>(loc, mlir::gpu::Dimension::y));
-    Value pid = trunc(i32_ty, add(add(pidX, mul(pidY, gridDimX)),
-                                  mul(pidZ, mul(gridDimX, gridDimY))));
-    Value programOffset = mul(i32_val(scratchWordSize), pid);
+    Value pid = b.trunc(i32_ty, b.add(b.add(pidX, b.mul(pidY, gridDimX)),
+                                  b.mul(pidZ, mul(gridDimX, gridDimY))));
+    Value programOffset = b.mul(b.i32_val(scratchWordSize), pid);
 
     auto gmemPtrTy = ptr_ty(rewriter.getContext(), 1);
     Value gmemBasePtr = adaptor.getPtr();
     auto smemPtrTy = ptr_ty(rewriter.getContext(), 3);
 
     // Add the [hwid, index] section.
-    Value warpHwidOffset =
-        add(programOffset, add(mul(warpId, i32_val(2)), i32_val(2)));
-    Value warpIndexOffset = add(warpHwidOffset, i32_val(1));
-    Value gmemWarpHwidPtr = gep(gmemPtrTy, i32_ty, gmemBasePtr, warpHwidOffset);
-    store(hwid, gmemWarpHwidPtr);
+    Value warpHwidOffset = b.add(programOffset, b.add(mul(warpId, i32_val(2)), i32_val(2)));
+    Value warpIndexOffset = b.add(warpHwidOffset, b.i32_val(1));
+    Value gmemWarpHwidPtr = b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpHwidOffset);
+    b.store(hwid, gmemWarpHwidPtr);
     Value gmemWarpIndexPtr =
-        gep(gmemPtrTy, i32_ty, gmemBasePtr, warpIndexOffset);
-    Value index = load(i32_ty, indexPtr);
-    store(index, gmemWarpIndexPtr);
+        b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpIndexOffset);
+    Value index = b.load(i32_ty, indexPtr);
+    b.store(index, gmemWarpIndexPtr);
 
     Block *prevBlock = op->getBlock();
     // Add the 'if' block.
@@ -89,14 +89,14 @@ struct ProtonFinalizeOpConversion
 
     // Lambda function to load a word from smem and store it to gmem.
     auto copyWord = [&](Value smemStruct, Value smemOffset, Value gmemOffset) {
-      Value smemBasePtr = extract_val(smemPtrTy, smemStruct, 0);
+      Value smemBasePtr = b.extract_val(smemPtrTy, smemStruct, 0);
       // Load the value from smem
-      Value ptr = gep(smemPtrTy, i32_ty, smemBasePtr, smemOffset);
+      Value ptr = b.gep(smemPtrTy, i32_ty, smemBasePtr, smemOffset);
       Value smemLoad =
-          targetInfo.loadShared(rewriter, loc, ptr, i32_ty, true_val());
+          targetInfo.loadShared(rewriter, loc, ptr, i32_ty, b.true_val());
       // Store the value to global memory
-      Value gmemPtr = gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemOffset);
-      store(smemLoad, gmemPtr);
+      Value gmemPtr = b.gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemOffset);
+      b.store(smemLoad, gmemPtr);
     };
 
     // Write back 'preample'.
