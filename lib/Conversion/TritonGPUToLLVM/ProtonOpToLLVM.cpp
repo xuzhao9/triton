@@ -43,7 +43,7 @@ struct ProtonFinalizeOpConversion
     Value warpId =
         b.udiv(threadId,
              b.i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
-    Value isFirstThread = b.icmp_eq(threadId, i32_val(0));
+    Value isFirstThread = b.icmp_eq(threadId, b.i32_val(0));
 
     const int slots =
         cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
@@ -73,7 +73,7 @@ struct ProtonFinalizeOpConversion
     auto smemPtrTy = ptr_ty(rewriter.getContext(), 3);
 
     // Add the [hwid, index] section.
-    Value warpHwidOffset = b.add(programOffset, b.add(mul(warpId, i32_val(2)), i32_val(2)));
+    Value warpHwidOffset = b.add(programOffset, b.add(b.mul(warpId, b.i32_val(2)), b.i32_val(2)));
     Value warpIndexOffset = b.add(warpHwidOffset, b.i32_val(1));
     Value gmemWarpHwidPtr = b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpHwidOffset);
     b.store(hwid, gmemWarpHwidPtr);
@@ -100,16 +100,16 @@ struct ProtonFinalizeOpConversion
     };
 
     // Write back 'preample'.
-    Value preample = i32_val(0xdeadbeef);
+    Value preample = b.i32_val(0xdeadbeef);
     Value gmemPreampleOffset = programOffset;
     Value gmemPreamplePtr =
-        gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemPreampleOffset);
-    store(preample, gmemPreamplePtr);
+        b.gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemPreampleOffset);
+    b.store(preample, gmemPreamplePtr);
 
     // Write back 'program id'.
-    Value gmemPidOffset = add(programOffset, i32_val(1));
-    Value gmemPidPtr = gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemPidOffset);
-    store(pid, gmemPidPtr);
+    Value gmemPidOffset = b.add(programOffset, b.i32_val(1));
+    Value gmemPidPtr = b.gep(gmemPtrTy, i32_ty, gmemBasePtr, gmemPidOffset);
+    b.store(pid, gmemPidPtr);
 
     int offset = 2 + 2 * numWarp;
     // Add the 'else' block and the condition.
@@ -121,21 +121,21 @@ struct ProtonFinalizeOpConversion
     const int upper = wordsPerEntry * (slots - 1);
     rewriter.setInsertionPointToEnd(ifBlock);
     Value initIdx = rewriter.create<LLVM::ConstantOp>(loc, i32_ty, 0);
-    Value wbBaseOffset = add(programOffset, i32_val(offset));
+    Value wbBaseOffset = b.add(programOffset, b.i32_val(offset));
 
     Block *writeBackBlock = rewriter.createBlock(
         op->getParentRegion(), std::next(Region::iterator(ifBlock)), {i32_ty},
         {loc});
     rewriter.setInsertionPointToStart(writeBackBlock);
     BlockArgument idx = writeBackBlock->getArgument(0);
-    Value gmemWbTagOffset = add(wbBaseOffset, idx);
+    Value gmemWbTagOffset = b.add(wbBaseOffset, idx);
     Value smemTagOffset = idx;
-    Value gmemWbCycleOffset = add(gmemWbTagOffset, i32_val(1));
-    Value smemCycleOffset = add(smemTagOffset, i32_val(1));
+    Value gmemWbCycleOffset = b.add(gmemWbTagOffset, b.i32_val(1));
+    Value smemCycleOffset = b.add(smemTagOffset, b.i32_val(1));
     copyWord(dataStruct, smemTagOffset, gmemWbTagOffset);
     copyWord(dataStruct, smemCycleOffset, gmemWbCycleOffset);
-    Value pred = icmp_slt(idx, i32_val(upper));
-    Value updatedIdx = add(idx, i32_val(wordsPerEntry));
+    Value pred = b.icmp_slt(idx, b.i32_val(upper));
+    Value updatedIdx = b.add(idx, b.i32_val(wordsPerEntry));
     rewriter.create<cf::CondBranchOp>(loc, pred, writeBackBlock, updatedIdx,
                                       thenBlock, ArrayRef<Value>());
 
