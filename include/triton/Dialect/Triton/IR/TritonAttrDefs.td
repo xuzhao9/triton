@@ -43,7 +43,7 @@ def TT_PaddingOptionAttr : I32EnumAttr<
     "PaddingOption", "",
     [
         I32EnumAttrCase<"PAD_ZERO", 1, "zero">,
-        // We can not set the string value to "NAN" because it is a keyword in C++
+        // We can not set the string value to "NAN" because it is a keyword in C
         I32EnumAttrCase<"PAD_NAN", 2, "nan">
     ]> {
     let cppNamespace = "::mlir::triton";
@@ -132,6 +132,26 @@ def TT_ScaleDotElemTypeAttr : I32EnumAttr<
       I32EnumAttrCase<"FP16", 6, "fp16">
     ]>{
   let cppNamespace = "::mlir::triton";
+}
+
+// Proton Profiling Metric.
+def TT_ProtonMetricAttr : I32EnumAttr<
+    "ProtonMetric", "",
+    [
+        I32EnumAttrCase<"CYCLE", 0, "cycle">,
+        I32EnumAttrCase<"INVALID", 1, "invalid">,
+    ]> {
+    let cppNamespace = "::mlir::triton";
+}
+
+// Proton Profiling Granularity.
+def TT_ProtonGranularityAttr : I32EnumAttr<
+    "ProtonGranularity", "",
+    [
+        I32EnumAttrCase<"WARPGROUP", 0, "warpgroup">,
+        I32EnumAttrCase<"WARP", 1, "warp">,
+    ]> {
+    let cppNamespace = "::mlir::triton";
 }
 
 #endif

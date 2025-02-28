@@ -43,6 +43,7 @@ constexpr static char AttrNumWarpsName[] = "ttg.num-warps";
 constexpr static char AttrNumCTAsName[] = "ttg.num-ctas";
 constexpr static char AttrTargetName[] = "ttg.target";
 constexpr static char AttrNumThreadsPerWarp[] = "ttg.threads-per-warp";
+constexpr static char AttrProtonSlotsName[] = "ttg.proton-slots";
 
 // Find the contextual number of warps on which this operation is executed.
 int lookupNumWarps(Operation *op);
@@ -238,6 +239,14 @@ llvm::SmallVector<T> expandMatrixShapeWithBatch(llvm::ArrayRef<T> s);
 
 llvm::SmallVector<unsigned>
 expandMatrixOrderWithBatch(llvm::ArrayRef<unsigned> o);
+
+// Return the number of warps in a warp group. Currently, hard-coded to 4.
+// TODO(fywkevin): Put this as an attribute of the module
+// so user can flexibly choose the granularity to profile.
+const int getWarpGroupSize();
+
+// Return the number of words (4bytes) each proton entry has.
+const int getWordsPerProtonEntry();
 
 } // namespace mlir::triton::gpu
 

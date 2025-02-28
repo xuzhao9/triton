@@ -15,12 +15,14 @@ add_triton_library(TritonGPUToLLVM
     MakeRangeOpToLLVM.cpp
     MemoryOpToLLVM.cpp
     PrintOpToLLVM.cpp
+    ProtonOpToLLVM.cpp
     ReduceOpToLLVM.cpp
     ScanOpToLLVM.cpp
     SPMDOpToLLVM.cpp
     TypeConverter.cpp
     Utility.cpp
     ViewOpToLLVM.cpp
+    ProtonOpToLLVM.cpp
 
     DEPENDS
     TritonGPUConversionPassIncGen

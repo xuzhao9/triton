@@ -51,6 +51,11 @@ public:
   Value programId(RewriterBase &rewriter, Location loc, ModuleOp moduleOp,
                   int axis) const override;
 
+  Value hardwareId(ConversionPatternRewriter &rewriter, Location loc) const override;
+
+  Value clock(ConversionPatternRewriter &rewriter, Location loc,
+              bool isClock64) const override;
+
   bool warpReduce(RewriterBase &rewriter, Location loc, SmallVector<Value> &acc,
                   triton::ReduceOp op, unsigned numLaneToReduce,
                   unsigned interleave) const override;

@@ -201,6 +201,8 @@ struct ConvertTritonAMDGPUToLLVM
 
     mlir::triton::AMD::populateTritonAMDGPUToLLVMPatterns(typeConverter,
                                                           patterns, AMDBenefit);
+    mlir::triton::populateProtonOpToLLVMPattern(typeConverter, patterns, targetInfo, commonBenefit);
+    mlir::triton::AMD::populateProtonOpToLLVMPattern(typeConverter, patterns, targetInfo, AMDBenefit);
     mlir::triton::AMD::populateUpcastMXFPToLLVMPatterns(typeConverter, patterns,
                                                         targetInfo, AMDBenefit);
 

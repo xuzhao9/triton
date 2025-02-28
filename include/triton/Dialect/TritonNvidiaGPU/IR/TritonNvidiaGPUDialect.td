@@ -43,6 +43,24 @@ def TritonNvidiaGPU_Dialect : Dialect {
 
   let useDefaultAttributePrinterParser = 1;
   let usePropertiesForAttributes = 1;
+
+  let extraClassDeclaration = [{
+      static std::string getNumWarpsAttrName() { return "triton_gpu.num-warps"; }
+      static int getNumWarps(ModuleOp mod) {
+        if(!mod->hasAttr("triton_gpu.num-warps"))
+          llvm::report_fatal_error(
+              "TritonGPU module should contain a triton_gpu.num-warps attribute");
+        return cast<IntegerAttr>(mod->getAttr("triton_gpu.num-warps")).getInt();
+      }
+      static int getNumCTAs(ModuleOp mod) {
+        if(!mod->hasAttr("triton_gpu.num-ctas"))
+          llvm::report_fatal_error(
+              "TritonGPU module should contain a triton_gpu.num-ctas attribute");
+        return cast<IntegerAttr>(mod->getAttr("triton_gpu.num-ctas")).getInt();
+      }
+      void registerTypes();
+    }];
+
 }
 
 #endif

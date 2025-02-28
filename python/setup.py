@@ -691,6 +691,7 @@ def get_packages():
         "triton/runtime",
         "triton/backends",
         "triton/tools",
+        "triton/intraprof",
         "triton/tools/extra",
     ]
     packages += [f'triton/backends/{backend.name}' for backend in backends]
