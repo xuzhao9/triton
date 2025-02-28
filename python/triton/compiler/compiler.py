@@ -50,7 +50,7 @@ def convert_type_repr(x):
 
 
 def _get_proton_slots_from_ir_str(src: str):
-    proton_slots_pattern = r'"triton_gpu.proton-slots"\s?=\s?(\d+)\s?:'
+    proton_slots_pattern = r'"ttg.proton-slots"\s?=\s?(\d+)\s?:'
     matches = re.findall(proton_slots_pattern, src)
     matches_len = len(matches)
     assert matches_len <= 1, "Expected exactly zero or one match for proton-slots"

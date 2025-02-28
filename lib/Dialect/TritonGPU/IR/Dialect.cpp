@@ -3546,65 +3546,64 @@ int triton::gpu::lookupNumWarps(Operation *op) {
 
 // LocalRecordOp
 void LocalRecordOp::getEffects(
-      SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
-          &effects) {
-    effects.emplace_back(MemoryEffects::Write::get(),
-                         SideEffects::DefaultResource::get());
-    effects.emplace_back(MemoryEffects::Read::get(),
-                         SideEffects::DefaultResource::get());
+    SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
+        &effects) {
+  effects.emplace_back(MemoryEffects::Write::get(),
+                       SideEffects::DefaultResource::get());
+  effects.emplace_back(MemoryEffects::Read::get(),
+                       SideEffects::DefaultResource::get());
+}
+
+LogicalResult LocalRecordOp::verify() {
+  auto m = getOperation()->getParentOfType<mlir::ModuleOp>();
+  if (!m->hasAttr("ttg.proton-slots"))
+    return emitError("Intra-kernel profiling not enabled");
+
+  int slots = cast<IntegerAttr>(m->getAttr("ttg.proton-slots")).getInt();
+
+  // Hack: adapt the hacking from Warp Specialization.
+  int wgSpecNum = 1;
+  if (Attribute attr = m->getAttr("triton_gpu.num-warp-groups-per-cta")) {
+    wgSpecNum = cast<IntegerAttr>(attr).getInt();
   }
-  
-  LogicalResult LocalRecordOp::verify() {
-    auto m = getOperation()->getParentOfType<mlir::ModuleOp>();
-    if (!m->hasAttr("triton_gpu.proton-slots"))
-      return emitError("Intra-kernel profiling not enabled");
-  
-    int slots = cast<IntegerAttr>(m->getAttr("triton_gpu.proton-slots")).getInt();
-  
-    // Hack: adapt the hacking from Warp Specialization.
-    int wgSpecNum = 1;
-    if (Attribute attr = m->getAttr("triton_gpu.num-warp-groups-per-cta")) {
-      wgSpecNum = cast<IntegerAttr>(attr).getInt();
-    }
-  
-    const int warpsPerGroup = getWarpGroupSize();
-    int numWarpgroups =
-        triton::gpu::lookupNumWarps(m) * wgSpecNum / warpsPerGroup;
-    if (slots < numWarpgroups)
-      return emitError(
-          "Proton slots must be greater than the number of warpgroups per CTA");
-  
-    // Ensure that slots is a power of 2. Otherwise, the profiling circular buffer
-    // index management incurs too much overhead.
-    const int slotsPerWarpGroup = slots / numWarpgroups;
-    if ((slotsPerWarpGroup & (slotsPerWarpGroup - 1)) != 0)
-      return emitError("Proton slots per warpgroup must be power of 2");
-  
-    // Make sure the region_id > 0 and region_id < 2^16.
-    if (getRegionId() < 0 || getRegionId() >= 1 << 16) {
-      return emitError("region_id must be in the range (0, 2^16)");
-    }
-  
-    return success();
+
+  const int warpsPerGroup = getWarpGroupSize();
+  int numWarpgroups =
+      triton::gpu::lookupNumWarps(m) * wgSpecNum / warpsPerGroup;
+  if (slots < numWarpgroups)
+    return emitError(
+        "Proton slots must be greater than the number of warpgroups per CTA");
+
+  // Ensure that slots is a power of 2. Otherwise, the profiling circular buffer
+  // index management incurs too much overhead.
+  const int slotsPerWarpGroup = slots / numWarpgroups;
+  if ((slotsPerWarpGroup & (slotsPerWarpGroup - 1)) != 0)
+    return emitError("Proton slots per warpgroup must be power of 2");
+
+  // Make sure the region_id > 0 and region_id < 2^16.
+  if (getRegionId() < 0 || getRegionId() >= 1 << 16) {
+    return emitError("region_id must be in the range (0, 2^16)");
   }
-  
-  // ProtonFinalizeOp
-  void ProtonFinalizeOp::getEffects(
-      SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
-          &effects) {
-    effects.emplace_back(MemoryEffects::Read::get(), &getDataMutable(),
-                         mlir::triton::gpu::SharedMemory::get());
-    effects.emplace_back(MemoryEffects::Read::get(), &getIndexPtrMutable(),
-                         mlir::triton::GlobalMemory::get());
-    effects.emplace_back(MemoryEffects::Write::get(), &getPtrMutable(),
-                         mlir::triton::GlobalMemory::get());
-  }
-  
-  // ProtonInitOp
-  void ProtonInitOp::getEffects(
-      SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
-          &effects) {
-    effects.emplace_back(MemoryEffects::Allocate::get(),
-                         mlir::triton::GlobalMemory::get());
-  }
-  
+
+  return success();
+}
+
+// ProtonFinalizeOp
+void ProtonFinalizeOp::getEffects(
+    SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
+        &effects) {
+  effects.emplace_back(MemoryEffects::Read::get(), &getDataMutable(),
+                       mlir::triton::gpu::SharedMemory::get());
+  effects.emplace_back(MemoryEffects::Read::get(), &getIndexPtrMutable(),
+                       mlir::triton::GlobalMemory::get());
+  effects.emplace_back(MemoryEffects::Write::get(), &getPtrMutable(),
+                       mlir::triton::GlobalMemory::get());
+}
+
+// ProtonInitOp
+void ProtonInitOp::getEffects(
+    SmallVectorImpl<SideEffects::EffectInstance<MemoryEffects::Effect>>
+        &effects) {
+  effects.emplace_back(MemoryEffects::Allocate::get(),
+                       mlir::triton::GlobalMemory::get());
+}

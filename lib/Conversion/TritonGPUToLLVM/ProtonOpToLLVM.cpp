@@ -37,16 +37,15 @@ struct ProtonFinalizeOpConversion
     if (Attribute attr = mod->getAttr("triton_gpu.num-warp-groups-per-cta")) {
       wgSpecNum = cast<IntegerAttr>(attr).getInt();
     }
-    const int numWarp =
-        triton::gpu::lookupNumWarps(mod) * wgSpecNum;
+    const int numWarp = triton::gpu::lookupNumWarps(mod) * wgSpecNum;
     Value threadId = getThreadId(rewriter, loc);
-    Value warpId =
-        b.udiv(threadId,
-             b.i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
+    Value warpId = b.udiv(
+        threadId,
+        b.i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
     Value isFirstThread = b.icmp_eq(threadId, b.i32_val(0));
 
     const int slots =
-        cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
+        cast<IntegerAttr>(mod->getAttr("ttg.proton-slots")).getInt();
     // scratch: preample (1), block id (1), [hwid, index] (2 * numWarp), data
     // (slots * wordsPerEntry)
     const int scratchWordSize = 1 + 1 + 2 * numWarp + slots * wordsPerEntry;
@@ -65,7 +64,7 @@ struct ProtonFinalizeOpConversion
         loc, i64_ty,
         rewriter.create<::mlir::gpu::GridDimOp>(loc, mlir::gpu::Dimension::y));
     Value pid = b.trunc(i32_ty, b.add(b.add(pidX, b.mul(pidY, gridDimX)),
-                                  b.mul(pidZ, b.mul(gridDimX, gridDimY))));
+                                      b.mul(pidZ, b.mul(gridDimX, gridDimY))));
     Value programOffset = b.mul(b.i32_val(scratchWordSize), pid);
 
     auto gmemPtrTy = ptr_ty(rewriter.getContext(), 1);
@@ -73,9 +72,11 @@ struct ProtonFinalizeOpConversion
     auto smemPtrTy = ptr_ty(rewriter.getContext(), 3);
 
     // Add the [hwid, index] section.
-    Value warpHwidOffset = b.add(programOffset, b.add(b.mul(warpId, b.i32_val(2)), b.i32_val(2)));
+    Value warpHwidOffset =
+        b.add(programOffset, b.add(b.mul(warpId, b.i32_val(2)), b.i32_val(2)));
     Value warpIndexOffset = b.add(warpHwidOffset, b.i32_val(1));
-    Value gmemWarpHwidPtr = b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpHwidOffset);
+    Value gmemWarpHwidPtr =
+        b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpHwidOffset);
     b.store(hwid, gmemWarpHwidPtr);
     Value gmemWarpIndexPtr =
         b.gep(gmemPtrTy, i32_ty, gmemBasePtr, warpIndexOffset);

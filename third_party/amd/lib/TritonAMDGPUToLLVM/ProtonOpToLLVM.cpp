@@ -35,7 +35,7 @@ struct LocalRecordOpConversion
     // const int warpsPerGroup = triton::gpu::getWarpGroupSize();
     // const int wordsPerEntry = triton::gpu::getWordsPerProtonEntry();
     // const int slots =
-    //     cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
+    //     cast<IntegerAttr>(mod->getAttr("ttg.proton-slots")).getInt();
     // const int numWarpgroup =
     //     triton::gpu::lookupNumWarps(mod) / warpsPerGroup;
     // const int step =
@@ -52,7 +52,8 @@ struct LocalRecordOpConversion
     //     udiv(threadId,
     //          i32_val(triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod)));
     // Value warpgroupSize = i32_val(
-    //     warpsPerGroup * triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod));
+    //     warpsPerGroup *
+    //     triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod));
     // Value warpgroupId = udiv(threadId, warpgroupSize);
 
     // // Load the index from smem.
@@ -62,11 +63,13 @@ struct LocalRecordOpConversion
 
     // // Compute the offset in smem.
     // int numWgSlot = slots / numWarpgroup;
-    // Value warpOffset = isWarpLevel ? mul(urem(warpId, i32_val(warpsPerGroup)),
+    // Value warpOffset = isWarpLevel ? mul(urem(warpId,
+    // i32_val(warpsPerGroup)),
     //                                      i32_val(wordsPerEntry))
     //                                : i32_val(0);
     // Value wgSlotOffset =
-    //     add(warpOffset, mul(warpgroupId, i32_val(wordsPerEntry * numWgSlot)));
+    //     add(warpOffset, mul(warpgroupId, i32_val(wordsPerEntry *
+    //     numWgSlot)));
     // Value smemTagOffset =
     //     add(wgSlotOffset, urem(curIdx, i32_val(wordsPerEntry * numWgSlot)));
 
@@ -95,7 +98,8 @@ struct LocalRecordOpConversion
     //                                : llvm::Twine("s_waitcnt lgkmcnt(0)");
     // std::string instStr =
     //     llvm::Twine(inst + "    ;;#proton_record_region_" +
-    //                 llvm::Twine(op.getRegionId()) + llvm::Twine("_") + startEnd)
+    //                 llvm::Twine(op.getRegionId()) + llvm::Twine("_") +
+    //                 startEnd)
     //         .str();
     // clkBuilder.create<>(instStr)->operator()();
     // auto clk64 = clkBuilder.launch(rewriter, loc, i64_ty, true);

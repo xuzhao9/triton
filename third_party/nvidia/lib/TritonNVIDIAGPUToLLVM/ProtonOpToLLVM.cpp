@@ -45,9 +45,9 @@ struct LocalRecordOpConversion
     const int warpSize = triton::gpu::TritonGPUDialect::getThreadsPerWarp(mod);
     const int warpgroupSize = warpsPerGroup * warpSize;
     const int slots =
-        cast<IntegerAttr>(mod->getAttr("triton_gpu.proton-slots")).getInt();
-    const int numWarpgroup = triton::gpu::lookupNumWarps(mod) *
-                             wgSpecNum / warpsPerGroup;
+        cast<IntegerAttr>(mod->getAttr("ttg.proton-slots")).getInt();
+    const int numWarpgroup =
+        triton::gpu::lookupNumWarps(mod) * wgSpecNum / warpsPerGroup;
     const int step =
         isWarpLevel ? (warpsPerGroup * wordsPerEntry) : wordsPerEntry;
 
@@ -60,8 +60,10 @@ struct LocalRecordOpConversion
     Value threadId = getThreadId(rewriter, loc);
     Value warpId = b.udiv(threadId, b.i32_val(warpSize));
     Value warpgroupId = b.udiv(threadId, b.i32_val(warpgroupSize));
-    Value isWarp = b.icmp_eq(b.urem(threadId, b.i32_val(warpSize)), b.i32_val(0));
-    Value isWarpgroup = b.icmp_eq(b.urem(threadId, b.i32_val(warpgroupSize)), b.i32_val(0));
+    Value isWarp =
+        b.icmp_eq(b.urem(threadId, b.i32_val(warpSize)), b.i32_val(0));
+    Value isWarpgroup =
+        b.icmp_eq(b.urem(threadId, b.i32_val(warpgroupSize)), b.i32_val(0));
 
     // Load the index from gmem.
     Value curIdx = b.load(i32_ty, indexPtr);
@@ -70,10 +72,14 @@ struct LocalRecordOpConversion
 
     // Compute the offset in smem.
     int numWgSlot = slots / numWarpgroup;
-    Value warpOffset = isWarpLevel ? b.mul(b.urem(warpId, b.i32_val(warpsPerGroup)), b.i32_val(wordsPerEntry))
-                                   : b.i32_val(0);
-    Value wgSlotOffset = b.add(warpOffset, b.mul(warpgroupId, b.i32_val(wordsPerEntry * numWgSlot)));
-    Value smemTagOffset = b.add(wgSlotOffset, b.urem(curIdx, b.i32_val(wordsPerEntry * numWgSlot)));
+    Value warpOffset = isWarpLevel
+                           ? b.mul(b.urem(warpId, b.i32_val(warpsPerGroup)),
+                                   b.i32_val(wordsPerEntry))
+                           : b.i32_val(0);
+    Value wgSlotOffset = b.add(
+        warpOffset, b.mul(warpgroupId, b.i32_val(wordsPerEntry * numWgSlot)));
+    Value smemTagOffset = b.add(
+        wgSlotOffset, b.urem(curIdx, b.i32_val(wordsPerEntry * numWgSlot)));
 
     // Record the entry and vectorized store to smem.
     Value vecPtr = b.gep(smemPtrTy, i32_ty, smemDataBasePtr, smemTagOffset);

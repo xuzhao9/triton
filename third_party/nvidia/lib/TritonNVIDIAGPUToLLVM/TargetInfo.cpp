@@ -429,8 +429,9 @@ Value TargetInfo::programId(RewriterBase &rewriter, Location loc,
   return LLVM::NVIDIA::llGetPid(loc, rewriter, moduleOp, axis);
 }
 
-Value TargetInfo::hardwareId(ConversionPatternRewriter &rewriter, Location loc) const {
-  return LLVM::NVIDIA::getSRegValue(rewriter, loc, "%smid");
+Value TargetInfo::hardwareId(ConversionPatternRewriter &rewriter,
+                             Location loc) const {
+  return LLVM::NVIDIA::getSRegValue(rewriter, loc, "smid");
 }
 
 Value TargetInfo::clock(ConversionPatternRewriter &rewriter, Location loc,

@@ -83,8 +83,7 @@ public:
     builder.setInsertionPointToStart(&func.getBody().front());
 
     const int wordsPerEntry = triton::gpu::getWordsPerProtonEntry();
-    int slots =
-        cast<IntegerAttr>(m->getAttr("triton_gpu.proton-slots")).getInt();
+    int slots = cast<IntegerAttr>(m->getAttr("ttg.proton-slots")).getInt();
 
     // Alloc the shared memory for buffer (uninitialized).
     Attribute sharedMemorySpace =
@@ -92,8 +91,8 @@ public:
     auto ctaLayout =
         triton::gpu::CTALayoutAttr::get(context, /*CTAsPerCGA=*/{1},
                                         /*CTASplitNum=*/{1}, /*CTAOrder=*/{0});
-    auto encoding =
-        triton::gpu::SwizzledSharedEncodingAttr::get(context, 1, 1, 1, {0}, ctaLayout);
+    auto encoding = triton::gpu::SwizzledSharedEncodingAttr::get(
+        context, 1, 1, 1, {0}, ctaLayout);
     auto bufferType =
         MemDescType::get({wordsPerEntry * slots}, builder.getI32Type(),
                          encoding, sharedMemorySpace, /*mutable_memory=*/true);
