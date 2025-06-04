@@ -401,6 +401,10 @@ class CUDABackend(BaseBackend):
             fmad = [] if opt.enable_fp_fusion else ['--fmad=false']
             arch = sm_arch_from_capability(capability)
             opt_level = ['--opt-level', '0'] if knobs.nvidia.disable_ptxas_opt else []
+            if not knobs.nvidia.disable_ptxas_opt and (ptxas_options := os.environ.get("PTXAS_OPTIONS", None)):
+                kernel_name = os.environ.get("PTXAS_OPTIONS_KERNEL", None)
+                if not kernel_name or kernel_name == metadata["name"]:
+                    opt_level = ptxas_options.split(" ")
             ptxas_cmd = [ptxas, *line_info, *fmad, '-v', *opt_level, f'--gpu-name={arch}', fsrc.name, '-o', fbin]
             try:
                 subprocess.run(ptxas_cmd, check=True, close_fds=False, stderr=flog)
